@@ -4,7 +4,7 @@ Sistema web trazable para registrar, operar y dar seguimiento a incidentes de TI
 
 ## Estado
 
-Semana 2 - integración continua, calidad y seguridad en progreso.
+Entrega final - versión candidata `v1.0.0`.
 
 ## Arquitectura
 
@@ -63,3 +63,4 @@ El trabajo se realiza en ramas `feature/*`, `fix/*` o `refactor/*`. Los commits 
 - [Controles de seguridad](docs/security.md)
 - [Registro de deuda técnica](docs/technical-debt.md)
 - [Validación con GitHub Actions](docs/github-actions.md)
+- [Plan de release `v1.0.0`](docs/release-v1.0.0.md)
