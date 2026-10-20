@@ -43,7 +43,7 @@ describe('GET /api/catalogs', () => {
       where: { active: true }, select: { id: true, name: true }, orderBy: { name: 'asc' },
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith({
-      where: { active: true, role: { in: ['TECHNICIAN', 'ADMIN'] } },
+      where: { active: true, role: 'TECHNICIAN' },
       select: { id: true, name: true }, orderBy: { name: 'asc' },
     });
     expect(prismaMock.user.findMany).toHaveBeenCalledWith({

@@ -27,7 +27,7 @@ app.get('/api/catalogs', async (_request, response, next) => {
         orderBy: { name: 'asc' },
       }),
       prisma.user.findMany({
-        where: { active: true, role: { in: ['TECHNICIAN', 'ADMIN'] } },
+        where: { active: true, role: 'TECHNICIAN' },
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),

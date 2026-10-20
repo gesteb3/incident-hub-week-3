@@ -13,6 +13,7 @@ services:
       - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql:ro
       - ./database/seeds/001_categories.sql:/docker-entrypoint-initdb.d/002_categories.sql:ro
       - ./database/seeds/002_users.sql:/docker-entrypoint-initdb.d/003_users.sql:ro
+      - ./database/migrations/002_demo_technicians.sql:/docker-entrypoint-initdb.d/004_demo_technicians.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
