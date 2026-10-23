@@ -21,7 +21,7 @@ Validación de entrega: Azure Pipelines `20261023.5`, con aprobación del ambien
 - `database/`: migraciones y datos iniciales de PostgreSQL.
 - `backend/tests/`: pruebas automatizadas de la API con dependencias simuladas.
 - `frontend/tests/`: pruebas de componentes y flujos de interfaz.
-- `tests/`: directorio reservado; no contiene pruebas extremo a extremo automatizadas.
+- `tests/`: pruebas de integridad del artefacto; no incluye pruebas extremo a extremo de la aplicación.
 - `devops/`: recursos de automatización y despliegue.
 - `docs/`: documentación técnica y evidencias verificables.
 
@@ -91,3 +91,4 @@ El trabajo se realiza en ramas `feature/*`, `fix/*` o `refactor/*`. Los commits 
 - [Plan de release `v1.0.0`](docs/release-v1.0.0.md)
 - [Estrategia de ramas](docs/branching.md)
 - [Estado de la entrega](docs/cierre-entrega.md)
+- [Historial de versiones](docs/versiones.md)
