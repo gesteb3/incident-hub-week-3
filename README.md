@@ -4,14 +4,24 @@ Sistema web trazable para registrar, operar y dar seguimiento a incidentes de TI
 
 ## Estado
 
-Entrega final - versión candidata `v1.0.0`.
+Versión `v1.0.0` publicada. Commit etiquetado: `96bacd7`.
+Validación de entrega: Azure Pipelines `20261023.5`, con aprobación del ambiente
+`incident-hub-release`. La aplicación se demuestra localmente.
+
+## Requisitos y responsables
+
+- Node.js 22 y npm; Docker con Docker Compose para PostgreSQL 16.
+- Gustavo Adolfo Esteban Batres: implementación y operación del proyecto.
+- Jorge Daniel Achij López: colaboración en revisión de cambios y aprobación de entrega.
 
 ## Arquitectura
 
 - `backend/`: API REST con Node.js, Express y TypeScript.
 - `frontend/`: aplicación web con React y TypeScript.
 - `database/`: migraciones y datos iniciales de PostgreSQL.
-- `tests/`: pruebas de integración y extremo a extremo.
+- `backend/tests/`: pruebas automatizadas de la API con dependencias simuladas.
+- `frontend/tests/`: pruebas de componentes y flujos de interfaz.
+- `tests/`: directorio reservado; no contiene pruebas extremo a extremo automatizadas.
 - `devops/`: recursos de automatización y despliegue.
 - `docs/`: documentación técnica y evidencias verificables.
 
@@ -31,12 +41,27 @@ y usa ese mismo puerto en `DATABASE_URL`. Después ejecuta `docker compose up -d
 
 ## Interfaz web local
 
+Primero, desde la raíz del repositorio, prepara y ejecuta la API:
+
+```powershell
+cd backend
+npm ci
+npm run prisma:generate
+npm run prisma:validate
+npm run dev
+```
+
+La API lee el archivo `.env` de la raíz. Configura `DATABASE_URL` con el mismo
+usuario, contraseña y puerto definidos para PostgreSQL. Comprueba
+`http://localhost:3000/health`. Para validar el backend ejecuta `npm test` y
+`npm run build` desde `backend/`.
+
 Con la API disponible en `http://localhost:3000`, inicia la interfaz en otra terminal:
 
 ```powershell
 cd frontend
 Copy-Item .env.example .env
-npm install
+npm ci
 npm run dev
 ```
 
@@ -64,3 +89,5 @@ El trabajo se realiza en ramas `feature/*`, `fix/*` o `refactor/*`. Los commits 
 - [Registro de deuda técnica](docs/technical-debt.md)
 - [Validación con GitHub Actions](docs/github-actions.md)
 - [Plan de release `v1.0.0`](docs/release-v1.0.0.md)
+- [Estrategia de ramas](docs/branching.md)
+- [Lista de cierre y demostración](docs/cierre-entrega.md)
