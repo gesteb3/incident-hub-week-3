@@ -29,6 +29,26 @@ La publicación se habilita únicamente cuando se cumplen estas condiciones:
 4. Crear el tag anotado `v1.0.0` sobre el commit mergeado.
 5. Asociar el tag al artefacto generado por Azure Pipelines y registrar la evidencia de la ejecución.
 
+## Ambientes y aprobación
+
+El entorno local de desarrollo ejecuta la aplicación y PostgreSQL. El ambiente
+Azure `incident-hub-release` registra la aceptación del paquete de entrega.
+Este último no es un servidor de producción ni publica una URL de la aplicación.
+
+En `main`, el pipeline ejecuta Validar, Empaquetar y Aprobar entrega. Antes del
+deployment job, Azure exige la aprobación configurada en el ambiente por Daniel.
+Las ramas de trabajo no ejecutan esta fase. El check de aprobación se administra
+en Azure y no puede sustituirse por modificar este YAML.
+
+Tras aprobar, el job descarga el artefacto de la misma ejecución, comprueba
+archivos obligatorios, versión y lockfile y registra hashes SHA-256 en el log.
+No reconstruye el paquete. El historial del ambiente vincula ejecución, commit y
+aprobación. Si se rechaza o falla la verificación, no se considera aceptada la entrega.
+
+Para la evidencia, conservar: ejecución esperando aprobación, aprobación real,
+tres fases exitosas, log de verificación y registro del ambiente. El tag final
+debe apuntar al commit validado y referenciar esa ejecución.
+
 ## Reversión
 
 Si la validación posterior detecta un problema, se conserva el artefacto anterior,

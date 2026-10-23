@@ -4,6 +4,8 @@
 backend/dist/
 backend/package.json
 backend/package-lock.json
+backend/prisma/schema.prisma
+devops/verify-release.mjs
 frontend/dist/
 database/migrations/
 database/seeds/

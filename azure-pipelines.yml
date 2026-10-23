@@ -121,6 +121,8 @@ stages:
                 backend/package-lock.json
                 frontend/dist/**
                 devops/artifact-manifest.txt
+                devops/verify-release.mjs
+                backend/prisma/**
                 database/**
                 compose.yaml
                 README.md
@@ -132,3 +134,32 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/it-incident-hub'
               ArtifactName: '$(artifactName)'
               publishLocation: 'Container'
+
+  - stage: Release
+    displayName: 'Aprobar entrega'
+    dependsOn: Package
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: ApprovePackage
+        displayName: 'Validar paquete aprobado'
+        pool:
+          name: Default
+        environment: 'incident-hub-release'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: none
+                - task: NodeTool@0
+                  inputs:
+                    versionSpec: '$(NODE_VERSION)'
+                - task: DownloadBuildArtifacts@1
+                  displayName: 'Descargar artefacto de esta ejecución'
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: '$(artifactName)'
+                    downloadPath: '$(Pipeline.Workspace)/approved-package'
+                - script: node devops/verify-release.mjs .
+                  displayName: 'Verificar contenido y versión aprobados'
+                  workingDirectory: '$(Pipeline.Workspace)/approved-package/$(artifactName)'
