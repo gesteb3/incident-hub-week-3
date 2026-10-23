@@ -49,7 +49,15 @@ Para la evidencia, conservar: ejecución esperando aprobación, aprobación real
 tres fases exitosas, log de verificación y registro del ambiente. El tag final
 debe apuntar al commit validado y referenciar esa ejecución.
 
-## Reversión
+## Control posterior de integridad
+
+La mejora vinculada a AB#29 añade firma HMAC del paquete en `main`, utilizando
+una variable secreta de Library, y comprobación después de la aprobación.
+Su evidencia corresponde a una nueva ejecución, no a `20261023.5`. El tag
+`v1.0.0` permanece sobre el commit originalmente validado. Consultar
+`security.md` para configuración, alcance y permisos del secreto.
+
+## Reversión operativa
 
 Si la validación posterior detecta un problema, se conserva el artefacto anterior,
 se detiene la promoción y se revierte al tag estable previo. La corrección se

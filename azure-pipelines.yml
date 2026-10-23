@@ -50,6 +50,9 @@ stages:
             displayName: 'Ejecutar pruebas automatizadas'
             workingDirectory: backend
 
+          - script: node --test tests/artifact-integrity.test.mjs
+            displayName: 'Probar integridad del artefacto'
+
           - script: |
               if not exist devops\artifact-manifest.txt (
                 echo ##vso[task.logissue type=error]No se encontro el manifiesto requerido para el artefacto de despliegue.
@@ -75,6 +78,8 @@ stages:
 
   - stage: Package
     displayName: 'Empaquetar y publicar'
+    variables:
+      - group: incident-hub-secrets
     dependsOn: Validate
     condition: succeeded()
     jobs:
@@ -122,11 +127,18 @@ stages:
                 frontend/dist/**
                 devops/artifact-manifest.txt
                 devops/verify-release.mjs
+                devops/artifact-integrity.mjs
                 backend/prisma/**
                 database/**
                 compose.yaml
                 README.md
               TargetFolder: '$(Build.ArtifactStagingDirectory)/it-incident-hub'
+
+          - script: node devops/artifact-integrity.mjs sign "$(Build.ArtifactStagingDirectory)/it-incident-hub"
+            displayName: 'Firmar integridad del paquete'
+            condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+            env:
+              ARTIFACT_SIGNING_KEY: $(ARTIFACT_SIGNING_KEY)
 
           - task: PublishBuildArtifacts@1
             displayName: 'Publicar artefacto'
@@ -137,6 +149,8 @@ stages:
 
   - stage: Release
     displayName: 'Aprobar entrega'
+    variables:
+      - group: incident-hub-secrets
     dependsOn: Package
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
@@ -150,6 +164,7 @@ stages:
             deploy:
               steps:
                 - download: none
+                - checkout: self
                 - task: NodeTool@0
                   inputs:
                     versionSpec: '$(NODE_VERSION)'
@@ -160,6 +175,11 @@ stages:
                     downloadType: 'single'
                     artifactName: '$(artifactName)'
                     downloadPath: '$(Pipeline.Workspace)/approved-package'
-                - script: node devops/verify-release.mjs .
+                - script: node devops/artifact-integrity.mjs verify "$(Pipeline.Workspace)/approved-package/$(artifactName)"
+                  displayName: 'Comprobar firma con secreto protegido'
+                  workingDirectory: '$(Build.SourcesDirectory)'
+                  env:
+                    ARTIFACT_SIGNING_KEY: $(ARTIFACT_SIGNING_KEY)
+                - script: node devops/verify-release.mjs "$(Pipeline.Workspace)/approved-package/$(artifactName)"
                   displayName: 'Verificar contenido y versión aprobados'
-                  workingDirectory: '$(Pipeline.Workspace)/approved-package/$(artifactName)'
+                  workingDirectory: '$(Build.SourcesDirectory)'

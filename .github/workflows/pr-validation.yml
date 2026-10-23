@@ -25,6 +25,9 @@ jobs:
             backend/package-lock.json
             frontend/package-lock.json
 
+      - name: Probar integridad de artefactos
+        run: node --test tests/artifact-integrity.test.mjs
+
       - name: Instalar dependencias del backend
         run: npm ci
         working-directory: backend
