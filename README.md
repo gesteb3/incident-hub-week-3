@@ -90,4 +90,4 @@ El trabajo se realiza en ramas `feature/*`, `fix/*` o `refactor/*`. Los commits 
 - [Validación con GitHub Actions](docs/github-actions.md)
 - [Plan de release `v1.0.0`](docs/release-v1.0.0.md)
 - [Estrategia de ramas](docs/branching.md)
-- [Lista de cierre y demostración](docs/cierre-entrega.md)
+- [Estado de la entrega](docs/cierre-entrega.md)
