@@ -15,6 +15,7 @@ vi.mock('../src/api', () => ({
 
 const technician = { id: 'tech-1', name: 'Técnica de soporte', role: 'TECHNICIAN' as const };
 const requester = { id: 'reporter-1', name: 'Solicitante', role: 'REQUESTER' as const };
+const administrator = { id: 'admin-1', name: 'Administrador', role: 'ADMIN' as const };
 const catalogs: Catalogs = {
   categories: [{ id: 'hardware', name: 'Hardware' }], technicians: [technician], users: [requester, technician],
 };
@@ -27,6 +28,7 @@ const meta = { page: 1, limit: 20, total: 0, totalPages: 0 };
 
 beforeEach(() => {
   vi.resetAllMocks();
+  localStorage.clear();
   window.history.replaceState(null, '', '/');
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value() { this.setAttribute('open', ''); } });
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value() { this.removeAttribute('open'); } });
@@ -71,11 +73,11 @@ describe('Atención del incidente', () => {
     let finish!: (value: Incident) => void;
     vi.mocked(api.assignTechnician).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
     const onChanged = vi.fn();
-    render(<IncidentOperations incident={incident} actor={technician} technicians={catalogs.technicians} onChanged={onChanged} onBusy={vi.fn()} />);
+    render(<IncidentOperations incident={incident} actor={administrator} technicians={catalogs.technicians} onChanged={onChanged} onBusy={vi.fn()} />);
     await user.selectOptions(screen.getByLabelText('Técnico responsable'), technician.id);
     await user.click(screen.getByRole('button', { name: 'Asignar técnico' }));
     expect((screen.getByRole('button', { name: 'Guardando…' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(api.assignTechnician).toHaveBeenCalledExactlyOnceWith(incident.id, technician.id, technician.id);
+    expect(api.assignTechnician).toHaveBeenCalledExactlyOnceWith(incident.id, technician.id, administrator.id);
     finish({ ...incident, status: 'ASIGNADO', technician });
     await waitFor(() => expect(onChanged).toHaveBeenCalledOnce());
   });
@@ -123,12 +125,53 @@ describe('Atención del incidente', () => {
 
 describe('Navegación y seguimiento', () => {
   it('abre un enlace directo aunque el incidente no esté en la primera página', async () => {
+    vi.mocked(api.fetchCatalogs).mockResolvedValue({ ...catalogs, users: [...catalogs.users, administrator] });
     window.history.replaceState(null, '', '/?incidentId=outside-page');
     vi.mocked(api.fetchIncident).mockResolvedValue({ ...incident, id: 'outside-page', title: 'Incidente de otra página' });
     render(<IncidentWorkspace />);
     expect(await screen.findByRole('heading', { name: 'Incidente de otra página' })).toBeTruthy();
     expect(api.fetchIncident).toHaveBeenCalledWith('outside-page', expect.any(AbortSignal));
     expect(screen.getByText(/El detalle abierto está fuera/)).toBeTruthy();
+  });
+
+  it('cambia la bandeja y retira el detalle anterior al cambiar de persona', async () => {
+    const user = userEvent.setup();
+    const assigned = { ...incident, id: 'assigned', title: 'Incidente asignado', technician };
+    const reported = { ...incident, id: 'reported', title: 'Mi reporte', reporter: requester };
+    vi.mocked(api.fetchIncidents).mockImplementation(async filters => ({
+      data: filters.reporterId ? [reported] : [assigned], meta: { ...meta, total: 1, totalPages: 1 },
+    }));
+    vi.mocked(api.fetchIncident).mockImplementation(async id => id === 'reported' ? reported : assigned);
+    render(<IncidentWorkspace />);
+    await screen.findByRole('heading', { name: 'Incidente asignado' });
+    await user.selectOptions(screen.getByLabelText('Trabajar como'), requester.id);
+    await screen.findByRole('heading', { name: 'Mi reporte' });
+    expect(screen.queryByRole('heading', { name: 'Incidente asignado' })).toBeNull();
+    expect(api.fetchIncidents).toHaveBeenLastCalledWith(
+      expect.objectContaining({ reporterId: requester.id, page: 1 }), expect.any(AbortSignal));
+    expect(screen.queryByRole('form', { name: 'Cambiar estado' })).toBeNull();
+    expect(localStorage.getItem('incident-hub-working-user')).toBe(requester.id);
+  });
+
+  it('limita al técnico a sus asignados y conserva el alcance al limpiar filtros', async () => {
+    const user = userEvent.setup();
+    render(<IncidentWorkspace />);
+    await screen.findByText('Mis incidentes asignados');
+    expect(api.fetchIncidents).toHaveBeenCalledWith(expect.objectContaining({ technicianId: technician.id }), expect.any(AbortSignal));
+    expect(screen.queryByRole('button', { name: /Nuevo incidente/ })).toBeNull();
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Limpiar' }) as HTMLButtonElement).disabled).toBe(false));
+    await user.click(screen.getByRole('button', { name: 'Limpiar' }));
+    await waitFor(() => expect(api.fetchIncidents).toHaveBeenCalledTimes(2));
+    expect(api.fetchIncidents).toHaveBeenLastCalledWith(expect.objectContaining({ technicianId: technician.id }), expect.any(AbortSignal));
+    expect((screen.getByLabelText('Técnico') as HTMLSelectElement).disabled).toBe(true);
+  });
+
+  it('restaura al usuario elegido sin consultar la bandeja global', async () => {
+    localStorage.setItem('incident-hub-working-user', requester.id);
+    render(<IncidentWorkspace />);
+    await screen.findByText('Mis reportes');
+    expect(api.fetchIncidents).toHaveBeenCalledTimes(1);
+    expect(api.fetchIncidents).toHaveBeenCalledWith(expect.objectContaining({ reporterId: requester.id }), expect.any(AbortSignal));
   });
 
   it('al guardar un comentario abre la última página y actualiza la bitácora', async () => {

@@ -8,9 +8,10 @@ type Props = {
   loading: boolean;
   error: string;
   retry: () => void;
+  fixedTechnicianId?: string;
 };
 
-export default function IncidentFiltersForm({ disabled, onApply, catalogs, loading, error, retry }: Props) {
+export default function IncidentFiltersForm({ disabled, onApply, catalogs, loading, error, retry, fixedTechnicianId }: Props) {
   const [filters, setFilters] = useState<IncidentFilters>({});
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -53,7 +54,7 @@ export default function IncidentFiltersForm({ disabled, onApply, catalogs, loadi
       </div>
       <div className="filter-field">
         <label htmlFor="filter-technician">Técnico</label>
-        <select id="filter-technician" disabled={disabled || loading || !!error} value={filters.technicianId ?? ''}
+        <select id="filter-technician" disabled={disabled || loading || !!error || !!fixedTechnicianId} value={fixedTechnicianId ?? filters.technicianId ?? ''}
           onChange={(event) => setFilters({ ...filters, technicianId: event.target.value || undefined })}>
           <option value="">{loading ? 'Cargando técnicos…' : 'Todos los técnicos'}</option>
           {catalogs.technicians.map((technician) => <option key={technician.id} value={technician.id}>{technician.name}</option>)}

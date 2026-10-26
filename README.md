@@ -71,12 +71,16 @@ comentarios paginados e historial de cambios. Los indicadores están en
 `http://localhost:5173/?view=dashboard`.
 
 El selector **Trabajar como** usa los usuarios activos de la base de datos para
-la demostración local. La autenticación está registrada como deuda pendiente.
+la demostración local. El administrador consulta todos los incidentes, el técnico
+sus asignados y el solicitante sus reportes. La selección se conserva al recargar
+y al abrir indicadores; las métricas corresponden al mismo alcance. La asignación
+se realiza desde el perfil administrador. La autenticación está registrada como deuda pendiente.
 
 Desde `frontend/`, ejecuta `npm test` para las pruebas de componentes y
 `npm run build` para validar la compilación de producción.
 
 - [Uso y validación de la operación web](docs/qa-operacion-frontend.md)
+- [Vistas por usuario](docs/vistas-por-usuario.md)
 
 ## Trazabilidad
 
