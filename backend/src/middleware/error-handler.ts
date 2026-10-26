@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler } from 'express';
-import { ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { AppError } from '../errors/app-error.js';
 
 export const errorHandler: ErrorRequestHandler = (error, _request, response, _next) => {
@@ -8,7 +8,7 @@ export const errorHandler: ErrorRequestHandler = (error, _request, response, _ne
       error: {
         code: 'VALIDATION_ERROR',
         message: 'Los datos enviados no son válidos',
-        details: error.flatten(),
+        details: z.flattenError(error),
       },
     });
     return;
