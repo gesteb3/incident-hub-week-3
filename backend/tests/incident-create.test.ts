@@ -152,6 +152,7 @@ describe('GET /api/incidents', () => {
     ['priority', 'CRITICAL'],
     ['categoryId', '00000000-0000-4000-8000-000000000001'],
     ['technicianId', '00000000-0000-4000-8000-000000000002'],
+    ['reporterId', '00000000-0000-4000-8000-000000000001'],
   ])('filtra individualmente por %s y aplica el filtro al total', async (key, value) => {
     prismaMock.incident.findMany.mockResolvedValue([]);
     prismaMock.incident.count.mockResolvedValue(0);
@@ -203,6 +204,7 @@ describe('GET /api/incidents', () => {
     { priority: 'URGENTE' },
     { categoryId: 'no-es-uuid' },
     { technicianId: 'no-es-uuid' },
+    { reporterId: 'no-es-uuid' },
     { status: '' },
     { status: ['NUEVO', 'CERRADO'] },
     { category: 'Red' },

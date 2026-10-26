@@ -17,7 +17,7 @@ export default function IncidentOperations({ incident, actor, technicians, onCha
   const target = nextStatus[incident.status];
   const needsReason = target === 'RESUELTO' || target === 'CERRADO';
   const canOperate = actor?.role === 'TECHNICIAN' || actor?.role === 'ADMIN';
-  const canAssign = incident.status !== 'RESUELTO' && incident.status !== 'CERRADO';
+  const canAssign = actor?.role === 'ADMIN' && incident.status !== 'RESUELTO' && incident.status !== 'CERRADO';
   const currentStep = statusOrder.indexOf(incident.status);
 
   async function save(kind: 'assignment' | 'status', event: FormEvent<HTMLFormElement>) {

@@ -40,6 +40,25 @@ describe('GET /api/incidents/metrics', () => {
     expect(Number.isNaN(Date.parse(response.body.data.generatedAt))).toBe(false);
   });
 
+  it.each(['reporterId', 'technicianId'])('aplica %s a todos los indicadores', async field => {
+    const id = '00000000-0000-4000-8000-000000000001';
+    const response = await request(app).get('/api/incidents/metrics').query({ [field]: id });
+    expect(response.status).toBe(200);
+    for (const call of prismaMock.incident.groupBy.mock.calls) {
+      expect(call[0].where).toEqual({ [field]: id });
+    }
+    expect(prismaMock.incident.groupBy).toHaveBeenCalledTimes(3);
+    expect(prismaMock.incident.count).toHaveBeenCalledWith({
+      where: { [field]: id, priority: 'CRITICAL', status: { in: ['NUEVO', 'ASIGNADO', 'EN_PROCESO'] } },
+    });
+  });
+
+  it('rechaza un identificador inválido antes de consultar métricas', async () => {
+    const response = await request(app).get('/api/incidents/metrics?reporterId=incorrecto');
+    expect(response.status).toBe(400);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
   it('distingue abiertos, resueltos y cerrados y distribuye todos los incidentes', async () => {
     prismaMock.incident.groupBy
       .mockResolvedValueOnce([

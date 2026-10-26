@@ -16,7 +16,9 @@ antes del build del backend en la etapa Package.
 
 ## Evidencias y seguimiento
 
-Conservar el log original, el PR de corrección y una nueva ejecución que
-incluya la corrección. La ejecución exitosa en Azure está pendiente de
-confirmación. Este fallo fue accidental y no sustituye el ejercicio de
-fallo controlado intencional.
+La corrección se integró mediante el PR 10. La ejecución posterior
+`20261017.2` completó validación y empaquetado, como se observa en el registro
+de ejecuciones y en las evidencias de la entrega. Conservar el log del fallo,
+el PR y la ejecución exitosa como un mismo recorrido de diagnóstico y corrección.
+Este fallo fue accidental y se documenta por separado del ejercicio planificado
+del manifiesto de artefacto.

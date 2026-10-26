@@ -8,18 +8,21 @@
   la entrega y cuenta con revisión de Jorge Daniel Achij López.
 - DT-01 y DT-03 resueltas con referencias en `technical-debt.md`.
 - Cinco deudas identificadas; autenticación, cobertura y logging siguen abiertas.
+- PR 23 de Azure y PR 4 de GitHub integran la firma del artefacto con secreto de
+  Library. Ambos repositorios finales contienen el mismo código y documentación.
+- La revisión de dependencias de cierre reporta cero vulnerabilidades:
+  219 dependencias del backend y 139 del frontend, según `npm audit --json`.
 
 ## Comprobaciones pendientes en plataformas y documento final
 
 - Boards: mínimo 2 Epics, 4 Features, 8 Stories y 16 Tasks con asignación,
   prioridad, estimaciones y estados consistentes. No cerrar trabajo pendiente.
 - Políticas de `main` en los tres repositorios; revisión y Work Item vinculados.
-- Variables/secretos protegidos: comprobar la configuración real sin capturar
-  sus valores. `.gitignore` por sí solo no prueba este control.
+- Variables/secretos protegidos: conservar evidencia de la variable enmascarada,
+  permiso del pipeline y ejecución exitosa de firma y verificación. No capturar valores.
 - Conservar logs y artefactos de las ejecuciones fallidas y corregidas, no solo
   capturas. Usar la retención disponible en Azure antes de su limpieza automática.
-- Versionado: solo se ha comprobado el tag `v1.0.0`. Los paquetes pasaron de
-  `0.1.0` a `1.0.0`; no presentar versiones intermedias como releases existentes.
+- Versionado: la secuencia comprobada y su alcance están en `versiones.md`.
 - Agregar URLs de proyecto, repositorios, PR, pipeline, ambiente y release al Word.
 - Mantener el análisis de dependencias fechado; sus resultados son una fotografía
   de la revisión y se deben contrastar con el pipeline final.
