@@ -10,6 +10,7 @@ pr:
       - main
 
 variables:
+  AZP_AGENT_CLEANUP_PSMODULES_IN_POWERSHELL: 'true'
   NODE_VERSION: '22.x'
   artifactName: 'it-incident-hub-drop'
 
