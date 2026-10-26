@@ -8,15 +8,15 @@ import CreateIncidentDialog from './CreateIncidentDialog';
 import IncidentDetail from './IncidentDetail';
 import Feedback from './Feedback';
 import './operations.css';
+import { chooseUser, storedUserId, rememberUser, userScope, scopeLabel } from './working-user';
 
 type Query = IncidentFilters & { page: number; limit: number };
 
 export default function IncidentWorkspace() {
   const catalogState = useCatalogs();
   const { catalogs } = catalogState;
-  const [actorId, setActorId] = useState('');
-  const actor = catalogs.users.find((user) => user.id === actorId)
-    ?? catalogs.users.find((user) => user.role === 'TECHNICIAN') ?? catalogs.users[0];
+  const [actorId, setActorId] = useState(storedUserId);
+  const actor = chooseUser(catalogs.users, actorId);
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [selectedId, setSelectedId] = useState(() => new URLSearchParams(location.search).get('incidentId') ?? '');
   const [query, setQuery] = useState<Query>({ page: 1, limit: 10 });
@@ -31,10 +31,12 @@ export default function IncidentWorkspace() {
   const hasFilters = !!(query.status || query.priority || query.categoryId || query.technicianId);
 
   useEffect(() => {
+    if (!actor) return;
+    rememberUser(actor.id);
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    fetchIncidents(query, controller.signal).then((result) => {
+    fetchIncidents({ ...query, ...userScope(actor) }, controller.signal).then((result) => {
       if (controller.signal.aborted) return;
       if (query.page > 1 && !result.data.length) {
         setQuery((current) => ({ ...current, page: Math.max(1, result.meta.totalPages) }));
@@ -42,12 +44,13 @@ export default function IncidentWorkspace() {
       }
       setIncidents(result.data);
       setPagination(result.meta);
-      setSelectedId((current) => current || result.data[0]?.id || '');
+      setSelectedId((current) => (actor.role === 'ADMIN' && current)
+        || result.data.find(item => item.id === current)?.id || result.data[0]?.id || '');
     }).catch((cause: unknown) => {
       if (!controller.signal.aborted) { setError(errorMessage(cause)); setIncidents([]); }
     }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [query, revision]);
+  }, [query, revision, actor?.id, actor?.role]);
 
   useEffect(() => {
     const url = new URL(location.href);
@@ -67,27 +70,33 @@ export default function IncidentWorkspace() {
     setSelectedId(incident.id);
     setQuery({ page: 1, limit: query.limit });
     setFilterRevision((value) => value + 1);
-    setNotice(`Incidente ${incident.id.slice(0, 8).toUpperCase()} registrado. Ya puedes asignar su atención.`);
+    setNotice(`Incidente ${incident.id.slice(0, 8).toUpperCase()} registrado. ${actor?.role === 'REQUESTER' ? 'El equipo de soporte podrá asignar su atención.' : 'Ya puedes asignar su atención.'}`);
   }
 
   return <>
     <section className="page-heading"><div><p className="eyebrow">MESA DE AYUDA</p><h1>Incidentes de TI</h1>
       <p className="subtitle">Registra, asigna y da seguimiento a los reportes.</p></div>
-      <button className="submit-button new-incident-button" type="button" disabled={busy || catalogState.loading || !!catalogState.error || !actor}
-        onClick={() => setCreating(true)}><span aria-hidden="true">＋</span> Nuevo incidente</button>
+      {actor?.role !== 'TECHNICIAN' && <button className="submit-button new-incident-button" type="button" disabled={busy || catalogState.loading || !!catalogState.error || !actor}
+        onClick={() => setCreating(true)}><span aria-hidden="true">＋</span> Nuevo incidente</button>}
     </section>
     <section className="work-context" aria-label="Usuario de trabajo">
       <div className="context-person"><span className="context-icon" aria-hidden="true">◉</span><div>
         <label htmlFor="work-user">Trabajar como</label>
         <select id="work-user" value={actor?.id ?? ''} disabled={busy || catalogState.loading || !!catalogState.error}
-          onChange={(event) => setActorId(event.target.value)}>
+          onChange={(event) => {
+            setActorId(event.target.value); rememberUser(event.target.value);
+            setSelectedId(''); setIncidents([]); setLoading(true); setCreating(false);
+            setQuery({ page: 1, limit: query.limit }); setFilterRevision(value => value + 1); setNotice('');
+          }}>
           {!catalogs.users.length && <option value="">{catalogState.loading ? 'Cargando usuarios…' : 'Sin usuarios disponibles'}</option>}
           {catalogs.users.map((user) => <option key={user.id} value={user.id}>{user.name} · {roleLabels[user.role]}</option>)}
         </select></div></div>
       <span className={`live-indicator ${error || catalogState.error ? 'connection-error' : ''}`} role="status"><span />
         {loading ? 'Actualizando…' : error || catalogState.error ? 'Sin actualizar' : 'Datos actualizados'}</span>
     </section>
-    <IncidentFiltersForm key={filterRevision} disabled={loading || busy} {...catalogState} onApply={applyFilters} />
+    <p className="subtitle">{actor ? scopeLabel(actor) : 'Cargando perfil…'}</p>
+    <IncidentFiltersForm key={filterRevision} disabled={loading || busy} {...catalogState}
+      fixedTechnicianId={actor?.role === 'TECHNICIAN' ? actor.id : undefined} onApply={applyFilters} />
     {notice && <div className="feedback feedback-success workspace-notice" role="status"><span className="success-mark">✓</span><span>{notice}</span>
       <button type="button" aria-label="Cerrar confirmación" onClick={() => setNotice('')}>×</button></div>}
     <section className="content-grid">
@@ -97,7 +106,8 @@ export default function IncidentWorkspace() {
         {loading ? <p className="muted-state" role="status">Cargando incidentes…</p>
           : error ? <Feedback message={error} onRetry={() => setRevision((value) => value + 1)} />
             : !incidents.length ? <div className="empty-state compact"><span className="empty-icon" aria-hidden="true">◇</span>
-              <strong>{hasFilters ? 'No hay coincidencias' : 'No hay incidentes'}</strong><span>{hasFilters ? 'Prueba otros filtros o pulsa Limpiar.' : 'Registra el primer incidente para comenzar.'}</span></div>
+              <strong>{hasFilters ? 'No hay coincidencias' : 'No hay incidentes'}</strong><span>{hasFilters ? 'Prueba otros filtros o pulsa Limpiar.'
+                : actor?.role === 'TECHNICIAN' ? 'Todavía no tienes incidentes asignados.' : 'Registra el primer incidente para comenzar.'}</span></div>
               : <div className="incident-list" aria-label="Seleccionar incidente">{incidents.map((incident) =>
                 <button className={`incident-card ${incident.id === selectedId ? 'selected' : ''}`} type="button" key={incident.id}
                   aria-pressed={incident.id === selectedId} disabled={busy} onClick={() => { setSelectedId(incident.id); setNotice(''); }}>
@@ -120,7 +130,7 @@ export default function IncidentWorkspace() {
         </nav>
       </aside>
       <section className="detail-column" aria-label="Detalle y atención">
-        {selectedId ? <IncidentDetail key={selectedId} id={selectedId} actor={actor} catalogs={catalogs} onBusy={setBusy}
+        {selectedId && !loading && !error ? <IncidentDetail key={`${actor?.id}:${selectedId}`} id={selectedId} actor={actor} catalogs={catalogs} onBusy={setBusy}
           onChanged={() => { setNotice(''); setRevision((value) => value + 1); }} />
           : <div className="panel empty-detail"><span className="empty-icon" aria-hidden="true">◇</span><strong>{loading ? 'Preparando bandeja…' : 'Selecciona un incidente'}</strong>
             <span>El detalle, la atención y el historial aparecerán aquí.</span></div>}

@@ -20,6 +20,14 @@ export const listIncidentsSchema = z.object({
     priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
     categoryId: z.string().uuid().optional(),
     technicianId: z.string().uuid().optional(),
+    reporterId: z.string().uuid().optional(),
+  }).strict(),
+});
+
+export const metricsQuerySchema = z.object({
+  query: z.object({
+    reporterId: z.string().uuid().optional(),
+    technicianId: z.string().uuid().optional(),
   }).strict(),
 });
 

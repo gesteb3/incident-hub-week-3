@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import { fetchMetrics, type Incident, type IncidentMetrics } from './api';
 import './dashboard.css';
+import { useCatalogs } from './incidents/useCatalogs';
+import { chooseUser, storedUserId, userScope, scopeLabel } from './incidents/working-user';
 
 const states: Record<Incident['status'], { label: string; color: string }> = {
   NUEVO: { label: 'Nuevo', color: '#7892ab' },
@@ -111,35 +113,39 @@ export function DashboardContent({ metrics }: { metrics: IncidentMetrics }) {
 }
 
 export default function Dashboard() {
+  const catalogState = useCatalogs();
+  const actor = chooseUser(catalogState.catalogs.users, storedUserId());
   const [metrics, setMetrics] = useState<IncidentMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    if (!actor) return;
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    fetchMetrics(controller.signal)
+    fetchMetrics(controller.signal, userScope(actor))
       .then((data) => { if (!controller.signal.aborted) setMetrics(data); })
       .catch((loadError: unknown) => {
         if (!controller.signal.aborted) setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar los indicadores.');
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
-  }, [reload]);
+  }, [reload, actor?.id, actor?.role]);
 
   return <section className="dashboard" aria-busy={loading}>
     <header className="dashboard-heading">
       <div><p className="eyebrow">MESA DE AYUDA / INDICADORES</p><h1>Resumen de atención<span className="heading-dot">.</span></h1><p className="subtitle">Estado general de los incidentes registrados.</p></div>
       <div className="dashboard-tools">
-        <span className="scope-badge">Todos los incidentes</span>
+        <span className="scope-badge">{actor ? `${actor.name} · ${scopeLabel(actor)}` : 'Cargando perfil…'}</span>
         <button className="secondary-button refresh-metrics" disabled={loading} onClick={() => setReload((value) => value + 1)} type="button"><Icon kind="refresh" />{loading ? 'Actualizando…' : 'Actualizar'}</button>
       </div>
     </header>
     <div className="dashboard-dateline"><span className={`data-status-dot ${error ? 'is-stale' : ''}`} /><span role="status">{error ? 'No se pudieron actualizar los datos' : loading ? 'Consultando indicadores…' : 'Última actualización'}{metrics && <time dateTime={metrics.generatedAt}> · {time.format(new Date(metrics.generatedAt))}</time>}</span><span className="dateline-rule" /></div>
     {error && <div className="dashboard-error" role="alert"><strong>{metrics ? 'Se muestran los últimos datos disponibles.' : 'No se pudieron cargar los indicadores.'}</strong><span>{error}</span><button className="secondary-button" type="button" disabled={loading} onClick={() => setReload((value) => value + 1)}>Reintentar</button></div>}
     {!metrics && loading && <div className="dashboard-loading" aria-label="Cargando indicadores"><div className="metrics-grid">{[1, 2, 3, 4].map((key) => <div className="metric-skeleton" key={key}><span /><strong /><span /></div>)}</div><div className="chart-skeleton" /></div>}
+    {catalogState.error && <div role="alert" className="dashboard-error">{catalogState.error}<button type="button" onClick={catalogState.retry}>Reintentar</button></div>}
     {metrics && <DashboardContent metrics={metrics} />}
   </section>;
 }

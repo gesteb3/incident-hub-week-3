@@ -28,6 +28,7 @@ export type IncidentFilters = {
   priority?: Incident['priority'];
   categoryId?: string;
   technicianId?: string;
+  reporterId?: string;
 };
 
 export type Pagination = { page: number; limit: number; total: number; totalPages: number };
@@ -49,8 +50,10 @@ export type IncidentMetrics = {
   generatedAt: string;
 };
 
-export async function fetchMetrics(signal?: AbortSignal) {
-  const result = await request<{ data: IncidentMetrics }>('/incidents/metrics', { signal });
+export async function fetchMetrics(signal?: AbortSignal, scope: Pick<IncidentFilters, 'reporterId' | 'technicianId'> = {}) {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(scope)) if (value) query.set(key, value);
+  const result = await request<{ data: IncidentMetrics }>(`/incidents/metrics${query.size ? `?${query}` : ''}`, { signal });
   return result.data;
 }
 

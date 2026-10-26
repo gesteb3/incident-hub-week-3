@@ -6,6 +6,7 @@ import {
   changeIncidentStatusSchema,
   incidentIdSchema,
   listIncidentsSchema,
+  metricsQuerySchema,
   createIncidentCommentSchema,
   listIncidentCommentsSchema,
 } from '../schemas/incident.schema.js';
@@ -36,12 +37,13 @@ export async function createIncidentController(
 }
 
 export async function getIncidentMetricsController(
-  _request: Request,
+  request: Request,
   response: Response,
   next: NextFunction,
 ) {
   try {
-    const metrics = await getIncidentMetrics();
+    const { query } = metricsQuerySchema.parse({ query: request.query });
+    const metrics = await getIncidentMetrics(query);
     response.set('Cache-Control', 'no-store').json({ data: metrics });
   } catch (error) {
     next(error);

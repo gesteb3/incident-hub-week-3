@@ -3,15 +3,15 @@ import { prisma } from '../lib/prisma.js';
 
 const openStatuses: IncidentStatus[] = ['NUEVO', 'ASIGNADO', 'EN_PROCESO'];
 
-export async function getIncidentMetrics() {
+export async function getIncidentMetrics(scope: { reporterId?: string; technicianId?: string } = {}) {
   const metrics = await prisma.$transaction(async (transaction) => {
     const [statuses, critical, categoryGroups, technicianGroups] = await Promise.all([
-      transaction.incident.groupBy({ by: ['status'], _count: { _all: true } }),
+      transaction.incident.groupBy({ by: ['status'], where: scope, _count: { _all: true } }),
       transaction.incident.count({
-        where: { priority: 'CRITICAL', status: { in: openStatuses } },
+        where: { ...scope, priority: 'CRITICAL', status: { in: openStatuses } },
       }),
-      transaction.incident.groupBy({ by: ['categoryId'], _count: { _all: true } }),
-      transaction.incident.groupBy({ by: ['technicianId'], _count: { _all: true } }),
+      transaction.incident.groupBy({ by: ['categoryId'], where: scope, _count: { _all: true } }),
+      transaction.incident.groupBy({ by: ['technicianId'], where: scope, _count: { _all: true } }),
     ]);
 
     const technicianIds = technicianGroups.flatMap((group) => group.technicianId ? [group.technicianId] : []);

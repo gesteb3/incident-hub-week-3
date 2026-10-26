@@ -21,7 +21,7 @@ Validación de entrega: Azure Pipelines `20261023.5`, con aprobación del ambien
 - `database/`: migraciones y datos iniciales de PostgreSQL.
 - `backend/tests/`: pruebas automatizadas de la API con dependencias simuladas.
 - `frontend/tests/`: pruebas de componentes y flujos de interfaz.
-- `tests/`: directorio reservado; no contiene pruebas extremo a extremo automatizadas.
+- `tests/`: pruebas de integridad del artefacto; no incluye pruebas extremo a extremo de la aplicación.
 - `devops/`: recursos de automatización y despliegue.
 - `docs/`: documentación técnica y evidencias verificables.
 
@@ -71,12 +71,16 @@ comentarios paginados e historial de cambios. Los indicadores están en
 `http://localhost:5173/?view=dashboard`.
 
 El selector **Trabajar como** usa los usuarios activos de la base de datos para
-la demostración local. La autenticación está registrada como deuda pendiente.
+la demostración local. El administrador consulta todos los incidentes, el técnico
+sus asignados y el solicitante sus reportes. La selección se conserva al recargar
+y al abrir indicadores; las métricas corresponden al mismo alcance. La asignación
+se realiza desde el perfil administrador. La autenticación está registrada como deuda pendiente.
 
 Desde `frontend/`, ejecuta `npm test` para las pruebas de componentes y
 `npm run build` para validar la compilación de producción.
 
 - [Uso y validación de la operación web](docs/qa-operacion-frontend.md)
+- [Vistas por usuario](docs/vistas-por-usuario.md)
 
 ## Trazabilidad
 
@@ -91,3 +95,4 @@ El trabajo se realiza en ramas `feature/*`, `fix/*` o `refactor/*`. Los commits 
 - [Plan de release `v1.0.0`](docs/release-v1.0.0.md)
 - [Estrategia de ramas](docs/branching.md)
 - [Estado de la entrega](docs/cierre-entrega.md)
+- [Historial de versiones](docs/versiones.md)

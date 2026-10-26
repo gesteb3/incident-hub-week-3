@@ -1,6 +1,6 @@
 # Analisis de dependencias
 
-Fecha de revision: 20 de octubre de 2026.
+Fecha de revisión de cierre: 22 de octubre de 2026.
 
 ## Alcance y metodo
 
@@ -11,7 +11,14 @@ vulnerabilidad de severidad alta o critica.
 | Componente | Dependencias analizadas | Criticas | Altas | Moderadas | Bajas | Decision |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
 | Backend | 219 | 0 | 0 | 0 | 0 | Mantener versiones fijadas y continuar la revision en cada pipeline. |
-| Frontend | 68 | 0 | 0 | 0 | 0 | Mantener versiones fijadas y continuar la revision en cada pipeline. |
+| Frontend | 139 | 0 | 0 | 0 | 0 | Mantener versiones fijadas y continuar la revision en cada pipeline. |
+
+El conteo corresponde a `metadata.dependencies.total` de `npm audit --json`,
+incluyendo dependencias de desarrollo. La revisión inicial del 20 de octubre
+registró 68 dependencias del frontend; este cierre actualiza el inventario tras
+incorporar las herramientas de pruebas. No se reportan vulnerabilidades conocidas
+en esta consulta. Las categorías del inventario pueden solaparse: se utiliza el
+total informado por npm, no la suma de categorías.
 
 ## Criterio de tratamiento
 

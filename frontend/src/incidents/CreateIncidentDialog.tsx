@@ -71,7 +71,7 @@ export default function CreateIncidentDialog({ catalogs, actor, onClose, onCreat
             : priority === 'LOW' ? 'Baja: el trabajo puede continuar mientras se atiende el problema.'
               : 'Media: existe una afectación parcial o una alternativa temporal.'}</div>
         <div className="field"><label htmlFor="new-reporter">Reportado por</label>
-          <select id="new-reporter" required value={reporterId} onChange={(event) => setReporterId(event.target.value)}>
+          <select id="new-reporter" required disabled={actor.role === 'REQUESTER'} value={reporterId} onChange={(event) => setReporterId(event.target.value)}>
             {catalogs.users.map((user) => <option key={user.id} value={user.id}>{user.name}</option>)}
           </select></div>
       </fieldset>

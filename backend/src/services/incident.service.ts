@@ -57,6 +57,7 @@ export async function listIncidents(input: ListIncidentsInput) {
     ...(input.priority ? { priority: input.priority } : {}),
     ...(input.categoryId ? { categoryId: input.categoryId } : {}),
     ...(input.technicianId ? { technicianId: input.technicianId } : {}),
+    ...(input.reporterId ? { reporterId: input.reporterId } : {}),
   };
   const [items, total] = await prisma.$transaction([
     prisma.incident.findMany({
