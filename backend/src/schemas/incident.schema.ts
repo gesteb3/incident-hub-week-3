@@ -76,7 +76,7 @@ export const changeIncidentStatusSchema = z.object({
     .superRefine((body, context) => {
       if (['RESUELTO', 'CERRADO'].includes(body.status) && !body.reason) {
         context.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: 'custom',
           path: ['reason'],
           message: 'El motivo es obligatorio para resolver o cerrar un incidente',
         });
