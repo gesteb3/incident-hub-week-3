@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, rmSync, unlinkSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, writeFileSync, rmSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -38,4 +38,20 @@ test('rechaza otra clave, clave ausente y firma malformada', t => {
   assert.throws(() => verifyArtifact(root, undefined));
   writeFileSync(join(root, 'artifact-integrity.json'), '{}');
   assert.throws(() => verifyArtifact(root, key));
+});
+
+test('una descarga limpia elimina archivos de entregas anteriores antes de verificar', t => {
+  const { root, key } = fixture(t);
+  const published = join(root, 'published');
+  const downloaded = join(root, 'downloaded');
+  mkdirSync(published);
+  mkdirSync(downloaded);
+  writeFileSync(join(published, 'index-new.js'), 'version actual');
+  signArtifact(published, key);
+  writeFileSync(join(downloaded, 'index-old.js'), 'version anterior');
+  cpSync(published, downloaded, { recursive: true });
+  assert.throws(() => verifyArtifact(downloaded, key), /no coincide/);
+  rmSync(downloaded, { recursive: true });
+  cpSync(published, downloaded, { recursive: true });
+  assert.doesNotThrow(() => verifyArtifact(downloaded, key));
 });

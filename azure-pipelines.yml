@@ -175,12 +175,13 @@ stages:
                     buildType: 'current'
                     downloadType: 'single'
                     artifactName: '$(artifactName)'
-                    downloadPath: '$(Pipeline.Workspace)/approved-package'
-                - script: node devops/artifact-integrity.mjs verify "$(Pipeline.Workspace)/approved-package/$(artifactName)"
+                    downloadPath: '$(Pipeline.Workspace)/approved-package/$(Build.BuildId)'
+                    cleanDestinationFolder: true
+                - script: node devops/artifact-integrity.mjs verify "$(Pipeline.Workspace)/approved-package/$(Build.BuildId)/$(artifactName)"
                   displayName: 'Comprobar firma con secreto protegido'
                   workingDirectory: '$(Build.SourcesDirectory)'
                   env:
                     ARTIFACT_SIGNING_KEY: $(ARTIFACT_SIGNING_KEY)
-                - script: node devops/verify-release.mjs "$(Pipeline.Workspace)/approved-package/$(artifactName)"
+                - script: node devops/verify-release.mjs "$(Pipeline.Workspace)/approved-package/$(Build.BuildId)/$(artifactName)"
                   displayName: 'Verificar contenido y versión aprobados'
                   workingDirectory: '$(Build.SourcesDirectory)'
